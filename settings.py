@@ -21,28 +21,16 @@ SESSION_CONFIG_DEFAULTS = dict(
     eMail = 'Hauke.Roggenkamp@mtec.ethz.ch',
     study_name = 'A study about social media',
     survey_link = 'https://unisg.qualtrics.com/jfe/form/SV_0DnMoLpM0VxjhrM',
-    dwell_threshold = 75,
     url_param = 'PROLIFIC_PID',
     completion_code = 'ABCDEF',
-    data_path = "https://raw.githubusercontent.com/DICE-app/sample-feeds/refs/heads/main/feeds/sample_2x2_brand_safety.csv",
+    data_path = "DICE/static/data/sample_videos.csv",
     delimiter=';',
     sort_by='datetime',
     condition_col='condition',
-    search_term = "Brazil",
-    preloader_delay = 5000,   # milliseconds — loading screen duration
     redirect_delay = 3000,    # milliseconds — auto-redirect delay
-    trending_topics=[
-        {'label': 'WeekDayMotivation', 'count': '12K Posts'},
-        {'label': 'Netflix', 'count': '36K Posts'},
-        {'label': '$BTC', 'count': '29K Posts'},
-        {'label': 'Judge', 'count': '28K Posts'},
-        {'label': 'Wordle', 'count': '2K Posts'},
-        {'label': 'WorkFromHome', 'count': '156K Posts'},
-        {'label': 'Colin Farrell', 'count': '18K Posts'},
-    ],
 )
 
-PARTICIPANT_FIELDS = ['tweets', 'finished']  # 'tweets' kept for backward-compatibility with existing databases
+PARTICIPANT_FIELDS = ['videos', 'finished']
 SESSION_FIELDS = ['prolific_completion_url']
 
 # ISO-639 code

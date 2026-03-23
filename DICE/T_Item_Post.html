@@ -1,180 +1,67 @@
 {{ if i.condition == player.feed_condition }}
-{{ if i.sponsored }}
-<tr id="{{i.doc_id}}" style="background-color: #E5E4E2;" onmouseover="sequence('i' + {{i.doc_id}});" ontouchstart="sequence('i' + {{i.doc_id}});">
-    <td>
-        <div class="post d-flex align-items-start p-2">
-            <!-- Profile picture -->
-            <div class="profile-pic me-2">
-                <img src="{{i.user_image}}" class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;"
-                     alt="Profile picture of {{i.username}}."
-                     data-bs-toggle="tooltip"
-                     data-bs-placement="bottom"
-                     data-bs-html="true"
-                     data-bs-custom-class="custom-tooltip"
-                     title="{{i.tooltip_html}}">
-            </div>
+<div class="video-item" id="{{ i.doc_id }}" data-doc-id="{{ i.doc_id }}">
 
-            <!-- Post content -->
-            <div class="post-content promoted-content w-100" id="post_{{i.doc_id}}">
-                <!-- Post header -->
-                <div class="d-flex justify-content-between"
-                     style="cursor: pointer;"
-                     data-bs-toggle="tooltip"
-                     data-bs-placement="bottom"
-                     data-bs-html="true"
-                     data-bs-custom-class="custom-tooltip"
-                     title="{{i.tooltip_html}}">
-                    <div>
-                        <small><strong>{{i.username}}</strong></small>
-                        <small class="text-muted">@{{i.handle}}</small>
-                        <small class="text-muted">&middot;</small>
-                        <small class="text-muted">Sponsored</small>
-                    </div>
-                </div>
+    <!-- Video -->
+    <video class="video-player" loop playsinline preload="auto" muted>
+        {{ if i.video_is_url }}
+        <source src="{{ i.video_path }}" type="video/mp4">
+        {{ else }}
+        <source src="{{ static i.video_path }}" type="video/mp4">
+        {{ endif }}
+    </video>
 
-                <!-- Post Body -->
-                <div class="spons-post">
-                    <!-- Post text -->
-                    <p class="my-1" id="post_text_{{i.doc_id}}" style="text-decoration: none; cursor: pointer;">{{i.text}}</p>
-                    <!-- Post image if available -->
-                    {{ if i.pic_available == True }}
-                    <a href="{{i.target}}" target="_blank" style="text-decoration: none; cursor: pointer;">
-                        <img src="{{i.media}}" class="img-fluid rounded-4 mt-2" alt="{{i.alt_text}}">
-                    </a>
-                    {{ endif }}
-                </div>
+    <!-- Tap to play/pause -->
+    <div class="tap-area"></div>
 
-                <!-- Post actions -->
-                <div class="d-flex justify-content-between mt-2">
-                    <!-- Reply -->
-                    <div class="reply-button col" data-bs-toggle="modal" data-bs-target="#replyModal_{{i.doc_id}}" id="reply_button_{{i.doc_id}}">
-                        <span class="bi bi-chat text-secondary reply-icon" id="reply_icon_{{i.doc_id}}" style="cursor: pointer">️</span>
-                        <span class="reply-count text-secondary" id="reply_count_{{i.doc_id}}">{{i.replies}}</span>
-                    </div>
-                    <!-- Repost -->
-                    <div class="repost-button col">
-                        <span class="bi bi-arrow-repeat text-secondary repost-icon" style="cursor: pointer">️</span>
-                        <span class="repost-count text-secondary">{{i.reposts}}</span>
-                    </div>
-                    <!-- Like -->
-                    <div class="like-button col" id="like_button_{{i.doc_id}}">
-                        <span class="bi bi-heart text-secondary like-icon" style="cursor: pointer">️</span>
-                        <span class="like-count text-secondary">{{i.likes}}</span>
-                    </div>
-                    <!-- Share -->
-                    <div class="share-button col">
-                        <span class="bi bi-upload text-secondary share-icon" style="cursor: pointer">️</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </td>
-</tr>
-{{ else }}
-<tr id="{{i.doc_id}}" onmouseover="sequence('i' + {{i.doc_id}});" ontouchstart="sequence('i' + {{i.doc_id}});">
-    <td>
-        <div class="post d-flex align-items-start p-2">
-            <!-- Profile picture -->
+    <!-- Play/pause indicator -->
+    <div class="play-indicator"></div>
+
+    <!-- Top gradient -->
+    <div class="gradient-top"></div>
+
+    <!-- Bottom gradient -->
+    <div class="gradient-bottom"></div>
+
+    <!-- Right sidebar -->
+    <div class="right-sidebar">
+        <!-- Profile picture -->
+        <div class="sidebar-profile">
             {{ if i.profile_pic_available }}
-            <div class="profile-pic me-2">
-                <img src="{{i.user_image}}" class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;"
-                     alt="Profile picture of {{i.username}}."
-                     data-bs-toggle="tooltip"
-                     data-bs-placement="bottom"
-                     data-bs-html="true"
-                     data-bs-custom-class="custom-tooltip"
-                     title="{{i.tooltip_html}}">
-            </div>
+            <img src="{{ i.user_image }}" alt="{{ i.username }}"
+                 style="width:44px;height:44px;object-fit:cover;border-radius:50%;border:2px solid #fff;">
             {{ else }}
-            <div class="me-2 poster {{ i.color_class }}" style="width: 48px; height: 48px;">
-                {{ i.icon}}
-            </div>
+            <div class="poster {{ i.color_class }}" style="width:44px;height:44px;border-radius:50%;border:2px solid #fff;">{{ i.icon }}</div>
             {{ endif }}
-
-            <!-- Post content -->
-            <div class="post-content w-100" id="post_{{i.doc_id}}">
-                <!-- Post header -->
-                <div class="d-flex justify-content-between"
-                     style="cursor: pointer;"
-                     data-bs-toggle="tooltip"
-                     data-bs-placement="bottom"
-                     data-bs-html="true"
-                     data-bs-custom-class="custom-tooltip"
-                     title="{{i.tooltip_html}}">
-                    <div>
-                        <small><strong>{{i.username}}</strong></small>
-                        <small class="text-muted">@{{i.handle}}</small>
-                        <small class="text-muted">&middot;</small>
-                        <small class="text-muted">{{i.date}}</small>
-                    </div>
-
-                </div>
-
-                <!-- Post text -->
-                <p class="my-1" id="post_text_{{i.doc_id}}">{{i.text}}</p>
-
-                <!-- Post image if available -->
-                {{ if i.pic_available == True }}
-                <img src="{{i.media}}" class="img-fluid rounded-4 mt-2" alt="{{i.alt_text}}">
-                {{ endif }}
-
-                <!-- Post actions -->
-                <div class="d-flex justify-content-between mt-2">
-                    <!-- Reply -->
-                    <div class="reply-button col" data-bs-toggle="modal" data-bs-target="#replyModal_{{i.doc_id}}" id="reply_button_{{i.doc_id}}">
-                        <span class="bi bi-chat text-secondary reply-icon" id="reply_icon_{{i.doc_id}}" style="cursor: pointer">️</span>
-                        <span class="reply-count text-secondary" id="reply_count_{{i.doc_id}}">{{i.replies}}</span>
-                    </div>
-                    <!-- Repost -->
-                    <div class="repost-button col">
-                        <span class="bi bi-arrow-repeat text-secondary repost-icon" style="cursor: pointer">️</span>
-                        <span class="repost-count text-secondary">{{i.reposts}}</span>
-                    </div>
-                    <!-- Like -->
-                    <div class="like-button col" id="like_button_{{i.doc_id}}">
-                        <span class="bi bi-heart text-secondary like-icon" style="cursor: pointer">️</span>
-                        <span class="like-count text-secondary">{{i.likes}}</span>
-                    </div>
-                    <!-- Share -->
-                    <div class="share-button col">
-                        <span class="bi bi-upload text-secondary share-icon" style="cursor: pointer">️</span>
-                    </div>
-                </div>
-            </div>
         </div>
-    </td>
-</tr>
-{{ endif }}
 
-<!-- Reply Modal -->
-<div class="modal fade reply-modal" id="replyModal_{{i.doc_id}}" tabindex="-1" aria-labelledby="replyModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="replying-post mb-5 ms-3 ps-3 border-start border-primary border-3 text-secondary"
-                     id="replying_post_{{i.doc_id}}"></div>
-                <div class="row text-secondary">
-                    <div class="col-2">
-                        <h1 class="text-end">
-                            <i class="bi bi-person-circle sticky-bottom" data-bs-toggle="popover"
-                               data-bs-content="You have been assigned the following ID: {{ participant.code }}. Please use it to identify yourself if you encounter any problems."></i>
-                        </h1>
-                    </div>
-                    <div class="col">
-                                    <textarea class="form-control border-light reply-field"
-                                              id="reply_to_item_{{i.doc_id}}" name="reply_to_item_{{i.doc_id}}"
-                                              rows="4" placeholder="Post your reply"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-primary w-25 rounded-5 reply-modal-button" id="reply_modal_button_{{i.doc_id}}"
-                        data-bs-dismiss="modal">Reply</button>
-            </div>
+        <!-- Like -->
+        <div class="sidebar-action like-button" id="like_button_{{ i.doc_id }}" role="button" tabindex="0" aria-label="Like">
+            <i class="bi bi-heart like-icon" style="font-size:28px;"></i>
+            <span class="action-count like-count">{{ i.likes }}</span>
+        </div>
+
+        <!-- Comment -->
+        <div class="sidebar-action comment-button" id="comment_button_{{ i.doc_id }}" data-doc-id="{{ i.doc_id }}" role="button" tabindex="0" aria-label="Comment">
+            <i class="bi bi-chat-fill" style="font-size:26px;"></i>
+            <span class="action-count reply-count" id="reply_count_{{ i.doc_id }}">{{ i.replies }}</span>
+        </div>
+
+        <!-- Share -->
+        <div class="sidebar-action share-button" role="button" tabindex="0" aria-label="Share">
+            <i class="bi bi-share-fill" style="font-size:24px;"></i>
+            <span class="action-count">{{ i.reposts }}</span>
         </div>
     </div>
+
+    <!-- Bottom video info -->
+    <div class="video-info">
+        <p class="video-username">@{{ i.handle }}</p>
+        <p class="video-description">{{ i.text }}</p>
+        <div class="video-audio">
+            <i class="bi bi-music-note-beamed"></i>
+            <span class="audio-text">{{ i.username }} · original sound</span>
+        </div>
+    </div>
+
 </div>
-{{endif}}
+{{ endif }}

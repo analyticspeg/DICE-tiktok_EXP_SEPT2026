@@ -23,7 +23,7 @@ function formatNumber(num) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const classes = ['like-count', 'repost-count', 'reply-count'];
+    const classes = ['like-count', 'reply-count'];
     console.log('number formatting triggered');
 
     classes.forEach(cls => {

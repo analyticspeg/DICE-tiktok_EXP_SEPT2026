@@ -1,400 +1,163 @@
-# DICE Lite
+# DICE TikTok
 
-A minimal, code-centric social media feed simulator for online experiments, built with [oTree](https://otree.readthedocs.io/en/latest/).
+A TikTok-style social media feed simulator for online behavioral experiments, built with [oTree](https://otree.readthedocs.io/en/latest/).
 
-DICE Lite is a trimmed-down version of [DICE](https://github.com/Howquez/DICE) (Digital In-Context Experiments). While the full DICE platform lets you create experimental sessions through a [graphical user interface](https://dice-app.org), DICE Lite strips away predefined templates and GUI layers. What remains is a generic microblogging-style UI that you can adapt, redesign, or replace entirely — while the core dwell-time measurement keeps working under the hood.
+## Background
 
-This makes DICE Lite a natural entry point for researchers and lab managers who are already familiar with oTree and prefer working with a minimal, modifiable codebase. It is not a replacement for DICE — if you want GUI-based session creation, [DICE](https://github.com/Howquez/DICE) remains the right choice.
+[DICE](https://github.com/Howquez/DICE) (Digital In-Context Experiments) is a platform for simulating social media feeds in controlled experiments. It comes with a graphical interface at [dice-app.org](https://dice-app.org) that lets you build and deploy feed experiments without writing code. [DICE Lite](https://github.com/Howquez/DICE-lite) is a stripped-down version for researchers who prefer working directly with code — same core logic, no GUI layer.
 
-## What It Does
+DICE TikTok is a further iteration. It replaces the microblogging-style feed of DICE Lite with a short-form video interface that mimics TikTok: full-screen vertical videos, swipe-to-navigate, like and comment interactions, and a bottom navigation bar. The behavioral measurement logic is adapted accordingly (including video play time).
 
-DICE Lite presents participants with a realistic social media feed and records their behavior as they scroll through it. The experiment flow is:
+## What researchers can use it for
 
-1. **Intro** — Welcome screen with consent form
-2. **Briefing** — Customizable study instructions
-3. **Feed** — Interactive social media feed populated from your CSV data
-4. **Redirect / Debrief** — Redirect to an external survey (e.g. Qualtrics) or show a debrief page
+DICE TikTok is designed for experiments where the stimulus is short-form video content. Some examples:
 
-### Behavioral Data Collected
+- **Misinformation research** — expose participants to a feed containing true and false video claims and measure engagement (likes, watch time, comments) by content type
+- **Advertising effects** — study how sponsored video content affects attitudes or behavior compared to organic content
+- **Algorithmic curation** — compare engagement across different feed orderings or video selection conditions
+- **Platform literacy** — examine how people interact with TikTok-style interfaces across age groups or demographics
 
-| Metric | Description |
-|--------|-------------|
-| Scroll sequence | Order in which posts entered the viewport |
-| Dwell time | Milliseconds each post was visible (configurable threshold) |
-| Likes | Which posts were liked |
-| Replies | Reply text per post |
-| Sponsored clicks | Clicks on sponsored/promoted posts |
-| Device info | Touch capability, device type, screen resolution |
+Like DICE and DICE Lite, this version integrates naturally with survey platforms (Qualtrics, SoSci Survey, etc.) via a redirect at the end of the feed. Participant IDs are passed as URL parameters so you can link feed behavior data to survey responses.
 
-## Prerequisites
+## What it measures
 
-- **Python 3.9+** — download from [python.org](https://www.python.org/downloads/) (make sure to add Python to your PATH)
-- **oTree 5.11+** — install with `pip3 install otree --upgrade` ([installation guide](https://otree.readthedocs.io/en/latest/install.html))
-- **A code editor** — we recommend [PyCharm](https://www.jetbrains.com/pycharm/) (Community Edition is free) for its Python autocompletion and project management. [VS Code](https://code.visualstudio.com/) or [Cursor](https://www.cursor.com/) with the [oTree extension](https://marketplace.visualstudio.com/items?itemName=nickg.otree) (syntax highlighting and live error checking) are also good choices.
+For each participant × video combination, the export contains:
 
-If you're new to oTree, start with the official documentation:
+| Field | Description |
+|-------|-------------|
+| `watch_time_seconds` | Seconds the video was actually playing (paused time excluded) |
+| `liked` | Whether the participant liked the video |
+| `has_comment` | Whether the participant left a comment |
+| `comment` | The comment text |
+| `sequence_position` | Position of this video in the feed |
 
-- [oTree documentation](https://otree.readthedocs.io/en/latest/)
-- [Installing oTree](https://otree.readthedocs.io/en/latest/install.html)
-- [oTree tutorial](https://otree.readthedocs.io/en/latest/tutorial/intro.html)
+Device information (device type, screen resolution, touch capability) is also recorded at the session level.
 
-oTree is a Python framework for behavioral experiments and surveys. It handles participant management, randomization, page sequencing, and data export out of the box — DICE Lite builds on top of it.
+## Getting started
 
-## Getting Started
+### Quickest path: download the `.otreezip`
 
-There are two ways to get started, depending on how much you want to customize.
+The releases page includes a ready-to-use `.otreezip` file. If you just want to run the experiment as-is or make small tweaks to the CSV and templates, this is the easiest route — no git required.
 
-### Option A: Download the `.otreezip` file (quickest)
-
-This is the standard oTree way to share and import projects.
-
-1. Download [`dice-lite.otreezip`](dice-lite.otreezip) from this repository
-2. Navigate to your desired project directory and unpack it:
-
-    ```bash
-    otree unzip dice-lite.otreezip
-    ```
-
-3. Install dependencies and start the server:
-
-    ```bash
-    cd dice-lite
-    pip3 install -r requirements.txt
-    otree devserver
-    ```
-
-4. Open [http://localhost:8000](http://localhost:8000) in your browser.
-
-### Option B: Use the GitHub template (recommended for customization)
-
-> This repository is a GitHub template. Click **"Use this template"** to create your own copy with full version control.
+To run it locally, download the `.otreezip` file, then:
 
 ```bash
-# Clone your copy of the template
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
-
-# Create a virtual environment and install dependencies
-python -m venv .venv
-source .venv/bin/activate   # on Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# Run the development server
+otree unzip DICE-tiktok.otreezip
+cd DICE-tiktok
 otree devserver
 ```
 
-Then open [http://localhost:8000](http://localhost:8000) in your browser.
+To deploy it directly to oTreeHub, skip the unzip step and upload the `.otreezip` file as described below.
 
-## Project Structure
+### Running it locally from source
 
-```
-├── DICE/                        # The oTree app
-│   ├── __init__.py              # Models, pages, and data processing logic
-│   ├── A_Intro.html             # Welcome & consent page
-│   ├── B_Briefing.html          # Study instructions
-│   ├── C_Feed.html              # Social media feed page
-│   ├── D_Redirect.html          # Redirect to external survey
-│   ├── D_Debrief.html           # Thank you / debrief page
-│   ├── T_Consent.html           # Consent form (included in A_Intro)
-│   ├── T_Item_Post.html         # Individual post component
-│   ├── T_Rules.html             # Briefing content
-│   ├── T_Trending_Topics.html   # Trending topics sidebar
-│   └── static/
-│       ├── css/                  # Stylesheets
-│       ├── data/                 # Sample feed CSVs
-│       ├── img/                  # Images and favicon
-│       └── js/                   # Tracking and interaction scripts
-├── settings.py                  # oTree settings and study configuration
-├── requirements.txt             # Python dependencies
-├── Procfile                     # Heroku deployment config
-└── runtime.txt                  # Python version for deployment
+If you want to modify the code, clone the repository instead:
+
+```bash
+git clone https://github.com/Howquez/DICE-tiktok.git
+cd DICE-tiktok
+pip install -r requirements.txt
+otree devserver
 ```
 
-## Architecture
+Then open `http://localhost:8000` in your browser.
 
-Understanding how data flows through DICE Lite makes it straightforward to add new features or modify existing ones.
+### Deploying to oTreeHub
 
-### Data Flow: CSV → Backend → Frontend → Data Collection
+[oTreeHub](https://www.otreehub.com) is the simplest way to host an oTree experiment online — no server setup required. To deploy:
+
+1. If you're working from source, run `otree zip` in the project directory to create a `.otreezip` file. If you downloaded the release, use that file directly.
+2. Log in to [otreehub.com](https://www.otreehub.com), create a new project, and upload the `.otreezip` file.
+3. Click **Deploy**. oTreeHub provisions a server and gives you a public URL to share with participants.
+
+When you update the project, repeat steps 1–2 and redeploy. Session data can be downloaded from the oTreeHub dashboard as CSV files.
+
+## Adding your own videos
+
+The feed is driven by a CSV file. The `video` column tells the app which video to show for each row — it accepts either a local filename or a full URL.
+
+### Option 1: Local files
+
+Place `.mp4` files in `DICE/static/mp4/` and reference them by filename in the CSV:
 
 ```
-CSV file                 __init__.py                    C_Feed.html / T_Item_Post.html
-┌──────────┐    read_feed()     ┌──────────────┐    vars_for_template()    ┌────────────────────┐
-│ doc_id   │───────────────────►│  DataFrame   │──────────────────────────►│  {{ for i in       │
-│ text     │  preprocessing()   │  stored per  │   posts dict passed to   │     posts.values() │
-│ likes    │  (format dates,    │  participant │   template context       │  }}                │
-│ ...      │   highlight tags,  │              │                          │    include         │
-│          │   prepare media)   │              │                          │    T_Item_Post     │
-└──────────┘                    └──────────────┘                          └────────────────────┘
-                                                                                   │
-                                                                                   ▼
-                             __init__.py                    JS (like_button.js, ...)
-                                ┌──────────────┐   form submission        ┌────────────────────┐
-                                │ Player model │◄──────────────────────── │ collectLikes()     │
-                                │ fields       │   JSON serialized to     │ collectReplies()   │
-                                │              │   hidden form fields     │ etc.               │
-                                └──────────────┘                          └────────────────────┘
+video
+1.mp4
+2.mp4
 ```
 
-**Step by step:**
+This works well for development and for small studies. For oTreeHub deployment, keep in mind that large video files will increase the size of your `.otreezip` and may slow things down. A few short clips (under 30 seconds, under 10 MB each) are fine.
 
-1. **CSV → Backend** (`__init__.py`): `read_feed()` loads your CSV. `preprocessing()` formats dates, highlights hashtags/mentions, prepares media URLs, and builds user profile tooltips. The resulting DataFrame is stored in `player.participant.tweets`.
+### Option 2: A video hosting service
 
-2. **Backend → Frontend** (`C_Feed.html`): `vars_for_template()` converts the DataFrame to a dictionary and passes it to the template. `C_Feed.html` loops through each post with `{{ for i in posts.values() }}` and includes `T_Item_Post.html` for each one — rendering it as a table row (`<tr>`).
+Upload your videos to a service that provides a direct `.mp4` URL — [Cloudinary](https://cloudinary.com), [Bunny.net](https://bunny.net), or AWS S3 all work. Paste the URL directly into the CSV:
 
-3. **Frontend interactions** (`T_Item_Post.html` + JS): Each post renders action buttons (reply, repost, like, share). JavaScript files handle the interactive behavior — `like_button.js` toggles icons and increments/decrements counts, tracks replies, and monitors sponsored post clicks.
+```
+video
+https://your-cdn.com/videos/clip1.mp4
+https://your-cdn.com/videos/clip2.mp4
+```
 
-4. **Data collection** (`like_button.js` → `__init__.py`): When the participant clicks a submit button, `collectDataHarmonized()` calls `collectLikes()`, `collectReplies()`, etc. and writes the JSON-serialized results into hidden `<input>` fields defined in `C_Feed.html`. These hidden fields are submitted with the form and map to the `Player` model fields defined in `__init__.py`.
+This is the recommended approach for larger studies. Videos load from the CDN rather than your oTreeHub server, which keeps the app fast and the `.otreezip` small. The service just needs to allow cross-origin requests (CORS) — most CDNs do this by default.
 
-### Key Files by Role
+### Option 3: Downloading videos for research use
 
-| What you want to change | Where to look |
-|--------------------------|---------------|
-| Post appearance (layout, buttons, icons) | `T_Item_Post.html` |
-| Feed-level layout (sidebar, search bar) | `C_Feed.html` |
-| Interaction logic (like toggle, reply modal) | `static/js/like_button.js` |
-| Repost/share toggle animation | `static/js/interactions.js` |
-| Dwell time tracking | `static/js/dwell.js` |
-| Data fields and processing pipeline | `__init__.py` (Player class, preprocessing) |
-| Study-level settings (data source, thresholds) | `settings.py` |
+If you want to use existing TikTok or YouTube Shorts videos as stimuli, you can download them with [`yt-dlp`](https://github.com/yt-dlp/yt-dlp), then host them using Option 1 or 2. Bear in mind your institution's policies on using third-party content in research.
 
-## Customization
+Once downloaded, host the files somewhere accessible (your university server, S3, a CDN) and reference them by URL in the CSV. Do not embed YouTube or TikTok links directly — those platforms do not allow it.
 
-### 1. Feed Data (CSV)
+## Configuring the feed
 
-The feed is populated from a CSV file. Point to it via `data_path` in `settings.py` — this can be a local path or a URL (GitHub raw file, Google Drive).
-
-Your CSV needs these columns (semicolon-delimited by default):
-
-| Column | Required | Description |
-|--------|----------|-------------|
-| `doc_id` | yes | Unique identifier for each post |
-| `datetime` | yes | Post timestamp (e.g. `01.03.22 06:00`) |
-| `text` | yes | Post body text |
-| `username` | yes | Display name |
-| `handle` | yes | @handle |
-| `user_description` | yes | Profile bio |
-| `user_image` | yes | Profile picture URL |
-| `user_followers` | yes | Follower count (numeric) |
-| `likes` | yes | Like count |
-| `reposts` | yes | Repost count |
-| `replies` | yes | Reply count |
-| `media` | no | Image URL for the post |
-| `alt_text` | no | Alt text for the image |
-| `condition` | no | Experimental condition label (for between-subjects designs) |
-| `sequence` | no | Fixed position in the feed (unset positions are randomized) |
-| `sponsored` | no | `1` for sponsored posts, `0` otherwise |
-| `target` | no | Click-through URL for sponsored posts |
-| `commented_post` | no | `1` to render as a highlighted/quoted post |
-
-Sample CSVs are included in `DICE/static/data/`.
-
-### 2. Study Settings (`settings.py`)
-
-Key settings you'll want to customize:
+The feed is controlled by a CSV file pointed to in `settings.py`:
 
 ```python
-SESSION_CONFIG_DEFAULTS = dict(
-    # Researcher info (shown on consent and debrief pages)
-    title='Dr.',
-    full_name='Your Name',
-    eMail='your@email.com',
-    study_name='Your study title',
-
-    # Feed data source
-    data_path='path/or/url/to/your/feed.csv',
-    delimiter=';',
-    condition_col='condition',        # column name for experimental conditions
-
-    # Survey integration
-    survey_link='https://your-survey-tool.com/...',
-    url_param='PROLIFIC_PID',         # URL parameter name for participant ID
-    completion_code='ABCDEF',         # Prolific completion code
-
-    # UI tuning
-    search_term='Your Topic',         # placeholder in the search bar
-    dwell_threshold=75,               # ms before a post counts as "seen"
-    preloader_delay=5000,             # ms loading screen duration
-    redirect_delay=3000,              # ms before auto-redirect to survey
-
-    # Trending topics sidebar
-    trending_topics=[
-        {'label': 'YourHashtag', 'count': '12K Posts'},
-        # ...
-    ],
-)
+data_path = "DICE/static/data/sample_videos.csv"
 ```
 
-### 3. Pages and Templates
+You can change this to a local path or a public URL (GitHub raw, Google Drive). The file uses `;` as delimiter by default.
 
-Each page is an HTML template in the `DICE/` folder. Edit them to change wording, layout, or add new elements. The page sequence is defined at the bottom of `DICE/__init__.py`:
+### Required columns
 
-```python
-page_sequence = [A_Intro, B_Briefing, C_Feed, D_Redirect, D_Debrief]
-```
+| Column | Description |
+|--------|-------------|
+| `doc_id` | Unique integer identifier for each video |
+| `datetime` | Post timestamp (format: `DD.MM.YY HH:MM`) |
+| `text` | Caption text shown below the username |
+| `video` | Filename or URL (see above) |
+| `likes` | Starting like count |
+| `reposts` | Starting share count |
+| `replies` | Starting comment count |
+| `username` | Display name |
+| `handle` | @handle |
+| `user_description` | Short profile bio |
+| `user_image` | Profile picture URL (leave blank for a generated icon) |
+| `user_followers` | Follower count |
+| `condition` | Experimental condition label (e.g. `A`, `B`) — used for between-subjects designs |
+| `sequence` | Fixed position in the feed (leave blank to randomize) |
 
-To add a new page, define a class in `__init__.py` and create a matching HTML template. See the [oTree pages documentation](https://otree.readthedocs.io/en/latest/pages.html) for details.
+The sample file at `DICE/static/data/sample_videos.csv` shows the expected format.
 
-### 4. Adding New Data Fields
+### Between-subjects conditions
 
-To record additional data, add fields to the `Player` class in `__init__.py` and include them in the page's `get_form_fields()`. See [oTree models documentation](https://otree.readthedocs.io/en/latest/models.html).
+If your CSV contains multiple values in the `condition` column, participants are automatically assigned to conditions in rotation. Only the videos matching a participant's condition are shown. Set `condition_col` in `settings.py` if your column has a different name.
 
-### Walkthrough: Adding a Dislike Button
+## Customizing the experiment
 
-This example walks through every file you'd need to touch to add a new "dislike" (thumbs-down) interaction — illustrating how the architecture connects end to end.
+Most things you'd want to change are in `settings.py` or in the HTML templates:
 
-#### 1. Add the button HTML (`T_Item_Post.html`)
-
-In the post actions `<div>` (where reply, repost, like, and share buttons are defined), add a dislike button. You'll find two action sections — one for sponsored posts and one for regular posts. Add the dislike button to both:
-
-```html
-<!-- Dislike -->
-<div class="dislike-button col" id="dislike_button_{{i.doc_id}}">
-    <span class="bi bi-hand-thumbs-down text-secondary dislike-icon" style="cursor: pointer">️</span>
-    <span class="dislike-count text-secondary">0</span>
-</div>
-```
-
-Place this after the like button `<div>` and before the share button `<div>`.
-
-#### 2. Add the interaction logic (`static/js/like_button.js`)
-
-Add a toggle function (mirroring `toggleLike`):
-
-```javascript
-function toggleDislike(button) {
-    const icon = button.querySelector('.dislike-icon');
-    const countSpan = button.querySelector('.dislike-count');
-    let count = parseInt(countSpan.textContent);
-
-    if (icon.classList.contains('bi-hand-thumbs-down')) {
-        icon.classList.remove('bi-hand-thumbs-down', 'text-secondary');
-        icon.classList.add('bi-hand-thumbs-down-fill', 'text-primary');
-        count++;
-    } else {
-        icon.classList.remove('bi-hand-thumbs-down-fill', 'text-primary');
-        icon.classList.add('bi-hand-thumbs-down', 'text-secondary');
-        count--;
-    }
-    countSpan.textContent = count.toString();
-}
-```
-
-Attach click listeners (mirroring the like button pattern):
-
-```javascript
-document.querySelectorAll('.dislike-button').forEach(button => {
-    button.addEventListener('click', function() {
-        toggleDislike(button);
-    });
-});
-```
-
-Add a data collection function (mirroring `collectLikes`):
-
-```javascript
-function collectDislikes() {
-    let dislikesData = [];
-    document.querySelectorAll('.dislike-button').forEach(button => {
-        let docId = parseInt(button.getAttribute('id').replace('dislike_button_', ''));
-        let icon = button.querySelector('.dislike-icon');
-        let isDisliked = icon.classList.contains('bi-hand-thumbs-down-fill');
-        dislikesData.push({ doc_id: docId, disliked: isDisliked });
-    });
-    return dislikesData;
-}
-```
-
-Then call `collectDislikes()` in the existing form submission handler (the `submitButton` click listener) and assign the result to a hidden form field:
-
-```javascript
-document.getElementById('dislikes_data').value = JSON.stringify(collectDislikes());
-```
-
-#### 3. Add a Player field and wire it up (`__init__.py`)
-
-Add a field to the `Player` class:
-
-```python
-dislikes_data = models.LongStringField(doc='tracks dislikes.', blank=True)
-```
-
-Include it in `C_Feed.get_form_fields()` so oTree knows to collect it from the form:
-
-```python
-fields = ['likes_data', 'replies_data', 'dislikes_data', 'promoted_post_clicks', ...]
-```
-
-#### 4. Add the hidden form field (`C_Feed.html`)
-
-DICE Lite uses explicit hidden `<input>` fields to pass JavaScript-collected data to the backend — oTree does **not** auto-generate these for you. Add a hidden input alongside the existing ones (e.g. `likes_data`, `viewport_data`):
-
-```html
-<input type="hidden" name="dislikes_data" id="dislikes_data" value="">
-```
-
-#### 5. Wire up the form submission (`static/js/like_button.js`)
-
-The `collectDataHarmonized()` function gathers all interaction data right before the form is submitted. Add your new collection call there:
-
-```javascript
-function collectDataHarmonized() {
-    let likesData = collectLikes();
-    let repliesData = collectReplies();
-    let dislikesData = collectDislikes();
-    let promotedClicksData = JSON.parse(document.getElementById('promoted_post_clicks').value);
-    return {
-        likes: JSON.stringify(likesData),
-        replies: JSON.stringify(repliesData),
-        dislikes: JSON.stringify(dislikesData),
-        promoted_clicks: JSON.stringify(promotedClicksData)
-    };
-}
-```
-
-Then, in **both** submit button click handlers (`submitButtonTop` and `submitButtonBottom`), write the data to the hidden field:
-
-```javascript
-document.getElementById('dislikes_data').value = data.dislikes;
-```
-
-That's it — five files, following the same patterns already used by the like button.
-
-## Deployment
-
-DICE Lite includes a `Procfile` for Heroku deployment. See the [oTree server setup guide](https://otree.readthedocs.io/en/latest/server/intro.html) for deployment options.
-
-For production, set these environment variables:
-- `OTREE_ADMIN_PASSWORD`
-- `OTREE_SECRET_KEY`
-
-## Useful oTree Documentation
-
-- [Installing oTree](https://otree.readthedocs.io/en/latest/install.html) — Python setup and first steps
-- [Tutorial](https://otree.readthedocs.io/en/latest/tutorial/intro.html) — learn the basics of oTree
-- [Pages](https://otree.readthedocs.io/en/latest/pages.html) — page sequencing, display logic, and timeouts
-- [Templates](https://otree.readthedocs.io/en/latest/templates.html) — HTML templates, static files, and styling
-- [Models](https://otree.readthedocs.io/en/latest/models.html) — defining data fields and player/group/session models
-- [Forms](https://otree.readthedocs.io/en/latest/forms.html) — form fields and validation
-- [Treatments](https://otree.readthedocs.io/en/latest/treatments.html) — experimental conditions and between-subjects designs
-- [Admin](https://otree.readthedocs.io/en/latest/admin.html) — session management and data export
-- [Server setup](https://otree.readthedocs.io/en/latest/server/intro.html) — deploying to Heroku or your own server
+- **Researcher info and consent text** — `DICE/T_Consent.html` and `settings.py` (`full_name`, `eMail`, `study_name`)
+- **Briefing instructions** — `DICE/B_Briefing.html`
+- **Survey redirect** — set `survey_link` and `url_param` in `settings.py`
+- **Hidden form fields are managed manually** — if you add a new Player field in `__init__.py`, you also need to add the corresponding `<input type="hidden">` in `C_Feed.html` and include the field in `get_form_fields()`
 
 ## Citation
 
-If you use DICE Lite in your research, please cite:
+If you use DICE TikTok in a published study, please cite the original DICE paper:
 
-> Roggenkamp, H., Boegershausen, J., & Hildebrand, C. (2026). DICE: Advancing Social Media Research Through Digital In-Context Experiments. *Journal of Marketing*. https://doi.org/10.1177/00222429251371702
+> Roggenkamp, H., Boegershausen, J., & Hildebrand, C. (2026). DICE: Advancing Social Media Research Through Digital In-Context Experiments. Journal of Marketing. https://doi.org/10.1177/00222429251371702 
 
-Since DICE Lite is built on oTree, please also cite:
+or check `Cite this repository` to the right.
 
-> Chen, D. L., Schonger, M., & Wickens, C. (2016). oTree — An open-source platform for laboratory, online, and field experiments. *Journal of Behavioral and Experimental Finance*, 9, 88–97. https://doi.org/10.1016/j.jbef.2015.12.001
+---
 
-## Links
-
-- [DICE (full version)](https://github.com/Howquez/DICE) — the complete toolkit with GUI-based session creation
-- [DICE web app](https://dice-app.org) — create experiments without coding
-- [oTree documentation](https://otree.readthedocs.io/en/latest/)
-
-## License
-
-This work is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+Questions, bug reports, and pull requests are welcome via [GitHub Issues](https://github.com/Howquez/DICE-tiktok/issues).

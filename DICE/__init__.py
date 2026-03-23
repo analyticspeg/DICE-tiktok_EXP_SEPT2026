@@ -5,6 +5,7 @@ import re
 import random
 import itertools
 import urllib.parse
+import json
 
 
 doc = """
@@ -17,9 +18,7 @@ class C(BaseConstants):
     PLAYERS_PER_GROUP = None
     NUM_ROUNDS = 1
 
-    RULES_TEMPLATE = "DICE/T_Rules.html"
     CONSENT_TEMPLATE = "DICE/T_Consent.html"
-    TOPICS_TEMPLATE = "DICE/T_Trending_Topics.html"
     ITEM_POST = "DICE/T_Item_Post.html"
 
 class Subsession(BaseSubsession):
@@ -89,9 +88,7 @@ def creating_session(subsession):
         # Reset index after sorting to ensure clean sequential indices
         posts.reset_index(drop=True, inplace=True)
 
-        # Assign processed posts to player-specific variable
-        # (participant field kept as 'tweets' for backward-compatibility with existing databases)
-        player.participant.tweets = posts
+        player.participant.videos = posts
 
         # Record the sequence for each player
         player.sequence = ', '.join(map(str, posts['doc_id'].tolist()))
@@ -163,8 +160,25 @@ def prepare_numeric_fields(df):
 
 def prepare_media(df):
     """Clean media URLs and set pic_available flag."""
-    df['media'] = df['media'].astype(str).str.replace("'|,", '', regex=True)
-    df['pic_available'] = np.where(df['media'].str.contains('http', na=False), True, False)
+    df['media'] = df['media'].astype(str).str.replace("'|,", '', regex=True) if 'media' in df.columns else ''
+    df['pic_available'] = np.where(df['media'].astype(str).str.contains('http', na=False), True, False) if 'media' in df.columns else False
+    return df
+
+
+def prepare_video(df):
+    """Prepare video source paths. Handles both URLs and local filenames."""
+    if 'video' not in df.columns:
+        df['video'] = ''
+        df['video_is_url'] = False
+        df['video_path'] = ''
+        return df
+    df['video'] = df['video'].fillna('').astype(str)
+    df['video_is_url'] = df['video'].apply(is_url)
+    # For local filenames, prepend 'mp4/' so {{ static i.video_path }} resolves correctly
+    df['video_path'] = df.apply(
+        lambda row: row['video'] if row['video_is_url'] else (f"mp4/{row['video']}" if row['video'] else ''),
+        axis=1
+    )
     return df
 
 
@@ -202,6 +216,7 @@ def preprocessing(df, config):
     df = highlight_entities(df)
     df = prepare_numeric_fields(df)
     df = prepare_media(df)
+    df = prepare_video(df)
     df = prepare_user_profiles(df)
 
     # Check if 'condition_col' is set and not empty, and if it's an existing column in df
@@ -235,7 +250,7 @@ class A_Intro(Page):
     @staticmethod
     def before_next_page(player, timeout_happened):
         # update sequence
-        df = player.participant.tweets
+        df = player.participant.videos
         posts = df[df['condition'] == player.feed_condition]
         player.sequence = ', '.join(map(str, posts['doc_id'].tolist()))
 
@@ -249,26 +264,17 @@ class C_Feed(Page):
     @staticmethod
     def get_form_fields(player: Player):
         fields = ['likes_data', 'replies_data', 'promoted_post_clicks', 'touch_capability', 'device_type', 'screen_resolution',
-                   'scroll_sequence', 'viewport_data', 'rowheight_data']
+                   'viewport_data']
         return fields
 
     @staticmethod
     def vars_for_template(player: Player):
         label_available = player.participant.label is not None
         # Reset index to ensure consistent ordering (important for generic feed swiper)
-        posts_df = player.participant.tweets.reset_index(drop=True)
+        posts_df = player.participant.videos.reset_index(drop=True)
         return dict(
             posts=posts_df.to_dict('index'),
-            search_term=player.session.config['search_term'],
             label_available=label_available,
-            trending_topics=player.session.config.get('trending_topics', []),
-        )
-
-    @staticmethod
-    def js_vars(player: Player):
-        return dict(
-            dwell_threshold=player.session.config['dwell_threshold'],
-            preloader_delay=player.session.config.get('preloader_delay', 5000),
         )
 
     @staticmethod
@@ -285,7 +291,7 @@ class C_Feed(Page):
             player.session.vars['prolific_completion_url'] = 'NA'
 
         if player.id_in_group != 1:
-            player.participant.tweets = ""
+            player.participant.videos = ""
 
 
 class D_Redirect(Page):
@@ -319,11 +325,37 @@ page_sequence = [A_Intro,
 
 
 def custom_export(players):
-    # header row
-    yield ['session', 'participant_code', 'participant_label', 'participant_in_session', 'condition', 'item_sequence',
-           'scroll_sequence', 'item_dwell_time', 'likes', 'replies']
+    yield ['session', 'participant_code', 'participant_label', 'participant_in_session',
+           'condition', 'doc_id', 'sequence_position', 'watch_time_seconds', 'liked', 'has_comment', 'comment']
+
     for p in players:
-        participant = p.participant
-        session = p.session
-        yield [session.code, participant.code, participant.label, p.id_in_group, p.feed_condition, p.sequence,
-               p.scroll_sequence, p.viewport_data, p.likes_data, p.replies_data]
+        if not p.sequence:
+            continue
+
+        doc_ids = [int(x.strip()) for x in p.sequence.split(',')]
+
+        def parse(field):
+            """Parse a JSON list field into a dict keyed by doc_id."""
+            try:
+                return {entry['doc_id']: entry for entry in json.loads(field or '[]')}
+            except (json.JSONDecodeError, KeyError, TypeError):
+                return {}
+
+        viewport = parse(p.viewport_data)
+        likes    = parse(p.likes_data)
+        replies  = parse(p.replies_data)
+
+        for position, doc_id in enumerate(doc_ids, start=1):
+            yield [
+                p.session.code,
+                p.participant.code,
+                p.participant.label,
+                p.id_in_group,
+                p.feed_condition,
+                doc_id,
+                position,
+                viewport.get(doc_id, {}).get('duration', ''),
+                likes.get(doc_id,    {}).get('liked',    ''),
+                replies.get(doc_id,  {}).get('hasReply', ''),
+                replies.get(doc_id,  {}).get('reply',    ''),
+            ]
