@@ -158,6 +158,10 @@ If you use DICE TikTok in a published study, please cite the original DICE paper
 
 or check `Cite this repository` to the right.
 
+## Tested on
+
+Chrome 146 / macOS 26.3.1 (arm64). Designed for mobile browsers (iOS Safari, Android Chrome) as the primary target platform.
+
 ---
 
 Questions, bug reports, and pull requests are welcome via [GitHub Issues](https://github.com/Howquez/DICE-tiktok/issues).
