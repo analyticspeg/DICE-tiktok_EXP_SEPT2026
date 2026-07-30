@@ -278,6 +278,12 @@ class C_Feed(Page):
         )
 
     @staticmethod
+    def js_vars(player: Player):
+        return dict(
+            view_duration=player.session.config['view_duration'], # <- add
+        )
+
+    @staticmethod
     def before_next_page(player, timeout_happened):
         player.participant.finished = True
 

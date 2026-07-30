@@ -20,18 +20,27 @@ SESSION_CONFIG_DEFAULTS = dict(
     full_name = 'Hauke Roggenkamp',
     eMail = 'Hauke.Roggenkamp@mtec.ethz.ch',
     study_name = 'A study about social media',
-    survey_link = 'https://unisg.qualtrics.com/jfe/form/SV_0DnMoLpM0VxjhrM',
+    survey_link = '',#'https://unisg.qualtrics.com/jfe/form/SV_0DnMoLpM0VxjhrM',
     url_param = 'PROLIFIC_PID',
     completion_code = 'ABCDEF',
-    data_path = "DICE/static/data/sample_videos.csv",
+    view_duration = 180,
+    #data_path = "DICE/static/data/sample_videos.csv",
+    data_path = "https://raw.githubusercontent.com/analyticspeg/DICE-tiktok/refs/heads/main/DICE/static/data/sample_exp.csv",
     delimiter=';',
     sort_by='datetime',
     condition_col='condition',
-    redirect_delay = 3000,    # milliseconds — auto-redirect delay
+    #redirect_delay = 3000,    # milliseconds — auto-redirect delay
 )
 
 PARTICIPANT_FIELDS = ['videos', 'finished']
 SESSION_FIELDS = ['prolific_completion_url']
+
+ROOMS = [
+    dict(
+        name='dice',                       # va nell'URL: /room/dice/
+        display_name='DICE TikTok study',
+    ),
+]
 
 # ISO-639 code
 # for example: de, fr, ja, ko, zh-hans
